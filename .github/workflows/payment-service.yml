@@ -1,0 +1,21 @@
+name: Payment Service CI
+
+on:
+  push:
+    paths:
+      - "services/payment-service/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: services/payment-service
+
+      - name: Run tests
+        run: npm test
+        working-directory: services/payment-service
