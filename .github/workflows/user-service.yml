@@ -1,0 +1,21 @@
+name: User Service CI
+
+on:
+  push:
+    paths:
+      - "services/user-service/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: services/user-service
+
+      - name: Run tests
+        run: npm test
+        working-directory: services/user-service
