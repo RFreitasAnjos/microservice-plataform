@@ -5,12 +5,15 @@ import {
   Body,
   Patch,
   Param,
-  Delete
+  Delete,
+  UseGuards
 } from '@nestjs/common'
 
 import { UsersService } from '../services/users.service'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { UpdateUserDto } from '../dto/update-user.dto'
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard'
+import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 
 @Controller('users')
 export class UsersController {
@@ -22,16 +25,19 @@ export class UsersController {
     return this.usersService.create(dto)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.usersService.findAll()
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -40,9 +46,18 @@ export class UsersController {
     return this.usersService.update(id, dto)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id)
+  }
+  
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@CurrentUser() user: any) {
+
+    return this.usersService.findOne(user.id)
+
   }
 
 }

@@ -1,30 +1,51 @@
-import { Injectable } from '@nestjs/common'
+import { ConflictException, Injectable } from '@nestjs/common'
 import { UsersRepository } from '../repositories/users.repository'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { UpdateUserDto } from '../dto/update-user.dto'
+import { HashService } from '../../../common/security/hash.service'
 
 @Injectable()
 export class UsersService {
 
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
-  create(dto: CreateUserDto) {
-    return this.usersRepository.create(dto)
+  async create(dto: CreateUserDto) {
+
+    const passwordHash = await HashService.hash(dto.password)
+    const existingUser = await this.usersRepository.findByEmail(dto.email)
+
+    if(existingUser) throw new ConflictException("Email already registered.")
+
+    return this.usersRepository.create({
+      name: dto.name,
+      email: dto.email,
+      password: passwordHash
+    })
   }
 
-  findAll() {
+  async findAll() {
     return this.usersRepository.findAll()
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     return this.usersRepository.findById(id)
   }
 
-  update(id: string, dto: UpdateUserDto) {
-    return this.usersRepository.update(id, dto)
+  async update(id: string, dto: UpdateUserDto) {
+
+    let password: string | undefined
+
+    if (dto.password) {
+      password = await HashService.hash(dto.password)
+    }
+
+    return this.usersRepository.update(id, {
+      ...dto,
+      password
+    })
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     return this.usersRepository.delete(id)
   }
 
