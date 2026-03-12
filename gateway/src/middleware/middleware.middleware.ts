@@ -1,26 +1,22 @@
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import { services } from '../config/services.config';
+import { createProxyMiddleware } from 'http-proxy-middleware'
+import { services } from '../config/services.config'
 
-export const userProxy = createProxyMiddleware({
-  target: services.user.url,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/users': '',
-  },
-});
+export const usersProxy = createProxyMiddleware({
+  target: services.users.url,
+  changeOrigin: true
+})
+
+export const authProxy = createProxyMiddleware({
+  target: services.users.url,
+  changeOrigin: true
+})
 
 export const paymentProxy = createProxyMiddleware({
   target: services.payment.url,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/payments': '',
-  },
-});
+  changeOrigin: true
+})
 
 export const notificationProxy = createProxyMiddleware({
   target: services.notification.url,
-  changeOrigin: true,
-  pathRewrite:{
-    "^/notification":""
-  }
-});
+  changeOrigin: true
+})

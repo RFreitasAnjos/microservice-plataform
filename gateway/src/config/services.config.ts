@@ -1,6 +1,6 @@
 export const services = {
 
-  user: {
+  users: {
     url: "http://localhost:3001"
   },
 

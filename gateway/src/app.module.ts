@@ -1,39 +1,35 @@
 import {
   MiddlewareConsumer,
   Module,
-  NestModule
+  NestModule,
+  RequestMethod
 } from "@nestjs/common";
-import { APP_GUARD } from "@nestjs/core";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-
-import {
-  userProxy,
-  paymentProxy,
-  notificationProxy
-} from "./middleware/middleware.middleware";
-
+import { authProxy, notificationProxy, paymentProxy, usersProxy } from "./middleware/middleware.middleware";
 import { requestLogger } from "./common/request-logger.middleware";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
+import { JwtStrategy } from "./auth/jwt.strategy";
+import { UsersController } from "./controllers/users.controller";
 
 @Module({
-
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
-
   imports: [
-
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
         limit: 10
       }
     ])
+  ],
 
+  controllers: [UsersController],
+
+  providers: [
+    JwtStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
   ]
-
 })
 export class AppModule implements NestModule {
 
@@ -44,16 +40,20 @@ export class AppModule implements NestModule {
       .forRoutes("*");
 
     consumer
-      .apply(userProxy)
-      .forRoutes("/users");
+      .apply(usersProxy)
+      .forRoutes({ path: "users/(.*)", method: RequestMethod.ALL });
+
+    consumer
+      .apply(authProxy)
+      .forRoutes({ path: "auth/(.*)", method: RequestMethod.ALL});
 
     consumer
       .apply(paymentProxy)
-      .forRoutes("/payments");
+      .forRoutes({ path: "payments/(.*)", method: RequestMethod.ALL });
 
     consumer
       .apply(notificationProxy)
-      .forRoutes("/notifications");
+      .forRoutes({ path: "notifications/(.*)", method: RequestMethod.ALL });
 
   }
 

@@ -3,6 +3,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
@@ -13,6 +14,7 @@ async function bootstrap() {
     .setVersion("1.0")
     .addBearerAuth()
     .build();
+
 
   const document = SwaggerModule.createDocument(app, config);
 
