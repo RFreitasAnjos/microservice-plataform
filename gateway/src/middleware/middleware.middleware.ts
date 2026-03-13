@@ -1,4 +1,4 @@
-import { createProxyMiddleware } from 'http-proxy-middleware'
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import { services } from '../config/services.config'
 import { RequestHandler } from 'express'
 
@@ -8,42 +8,59 @@ const baseProxyOptions = {
   timeout: 30000,
   proxyTimeout: 30000,
   logLevel: 'warn' as const,
-  onError: (err: Error, req: any, res: any) => {
-    console.error(`[Proxy Error] ${req.method} ${req.path}:`, err.message)
-    res.status(503).json({
-      error: 'Service unavailable',
-      message: 'Could not reach the service',
-      timestamp: new Date().toISOString()
-    })
-  },
-  onProxyReq(proxyReq, req) {
-    if (req.body) {
-      const bodyData = JSON.stringify(req.body);
-      console.log(`[Proxy Request] ${req.method} ${req.path} - Body bytes: ${Buffer.byteLength(bodyData)}`);
-      proxyReq.setHeader('Content-Type', 'application/json');
-      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-      proxyReq.write(bodyData);
+  on: {
+    error: (err: Error, req: any, res: any) => {
+      console.error(`[Proxy Error] ${req.method} ${req.path}:`, err.message)
+
+      const payload = JSON.stringify({
+        error: 'Service unavailable',
+        message: 'Could not reach the service',
+        details: err.message,
+        timestamp: new Date().toISOString()
+      })
+
+      if (!res.headersSent) {
+        res.writeHead(503, {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        })
+      }
+
+      res.end(payload)
+    },
+    proxyReq: (proxyReq, req) => {
+      // Re-stream parsed bodies safely when Nest/Express body parser already consumed the request stream.
+      fixRequestBody(proxyReq, req)
+
+      if (req.body && Object.keys(req.body).length > 0) {
+        const bodyData = JSON.stringify(req.body)
+        console.log(`[Proxy Request] ${req.method} ${req.path} - Body bytes: ${Buffer.byteLength(bodyData)}`)
+      }
     }
-  },
-  
+  }
 }
 
-export const usersProxy: RequestHandler = createProxyMiddleware({
-  target: services.users.url,
-  ...baseProxyOptions
-})
+const createServiceProxy = (target: string, pathRewrite?: () => string): RequestHandler =>
+  createProxyMiddleware({
+    target,
+    ...baseProxyOptions,
+    ...(pathRewrite ? { pathRewrite } : {})
+  })
 
-export const authProxy: RequestHandler = createProxyMiddleware({
-  target: services.users.url,
-  ...baseProxyOptions
-})
+export const usersProxy: RequestHandler = createServiceProxy(services.users.url)
 
-export const paymentProxy: RequestHandler = createProxyMiddleware({
-  target: services.payment.url,
-  ...baseProxyOptions
-})
+export const authProxy: RequestHandler = createServiceProxy(services.users.url)
 
-export const notificationProxy: RequestHandler = createProxyMiddleware({
-  target: services.notification.url,
-  ...baseProxyOptions
-})
+export const userRegisterAliasProxy: RequestHandler = createServiceProxy(
+  services.users.url,
+  () => '/users/register'
+)
+
+export const userLoginAliasProxy: RequestHandler = createServiceProxy(
+  services.users.url,
+  () => '/auth/login'
+)
+
+export const paymentProxy: RequestHandler = createServiceProxy(services.payment.url)
+
+export const notificationProxy: RequestHandler = createServiceProxy(services.notification.url)
