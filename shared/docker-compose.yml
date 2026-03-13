@@ -14,6 +14,50 @@ services:
       - "5432:5432"
     volumes:
       - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  user-service:
+    build:
+      context: ../services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    restart: always
+    depends_on:
+      user-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@user-db:5432/users_db
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES: 1d
+    ports:
+      - "3001:3001"
+
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    restart: always
+    depends_on:
+      - user-service
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      CORS_ALLOW_CREDENTIALS: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      USER_SERVICE_URL: http://user-service:3001
+      PAYMENT_SERVICE_URL: http://payment-service:5045
+      NOTIFICATION_SERVICE_URL: http://notification-service:4000
+    ports:
+      - "3000:3000"
 
   payment-db:
     image: postgres:16

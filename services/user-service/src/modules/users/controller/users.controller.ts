@@ -13,8 +13,8 @@ import { ApiBearerAuth } from '@nestjs/swagger'
 import { UsersService } from '../services/users.service'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { UpdateUserDto } from '../dto/update-user.dto'
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard'
-import { CurrentUser } from 'src/common/decorators/current-user.decorator'
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
+import { CurrentUser } from '../../../common/decorators/current-user.decorator'
 
 @Controller('users')
 export class UsersController {
@@ -23,6 +23,7 @@ export class UsersController {
 
   @Post('register')
   create(@Body() dto: CreateUserDto) {
+    console.log('Creating user with data:', dto)
     return this.usersService.create(dto)
   }
 
