@@ -8,8 +8,9 @@ import { authProxy, notificationProxy, paymentProxy, usersProxy } from "./middle
 import { requestLogger } from "./common/request-logger.middleware";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
-import { JwtStrategy } from "./auth/jwt.strategy";
-import { UsersController } from "./controllers/users.controller";
+import { JwtAuthMiddleware } from "./auth/jwt-auth.middleware";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
 
 @Module({
   imports: [
@@ -21,10 +22,10 @@ import { UsersController } from "./controllers/users.controller";
     ])
   ],
 
-  controllers: [UsersController],
+  controllers: [AppController],
 
   providers: [
-    JwtStrategy,
+    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard
@@ -40,16 +41,36 @@ export class AppModule implements NestModule {
       .forRoutes("*");
 
     consumer
+      .apply(JwtAuthMiddleware)
+      .forRoutes(
+        { path: 'users', method: RequestMethod.GET },
+        { path: 'users/(.*)', method: RequestMethod.GET },
+        { path: 'users/(.*)', method: RequestMethod.PATCH },
+        { path: 'users/(.*)', method: RequestMethod.DELETE },
+      );
+
+    consumer
       .apply(usersProxy)
-      .forRoutes({ path: "users/(.*)", method: RequestMethod.ALL });
+      .forRoutes(
+        { path: "users", method: RequestMethod.ALL },
+        { path: "users/(.*)", method: RequestMethod.ALL }
+      );
 
     consumer
       .apply(authProxy)
-      .forRoutes({ path: "auth/(.*)", method: RequestMethod.ALL});
+      .forRoutes({ path: "auth/(.*)", method: RequestMethod.ALL });
+
+    consumer
+      .apply(JwtAuthMiddleware)
+      .forRoutes({ path: "payments/(.*)", method: RequestMethod.ALL });
 
     consumer
       .apply(paymentProxy)
       .forRoutes({ path: "payments/(.*)", method: RequestMethod.ALL });
+
+    consumer
+      .apply(JwtAuthMiddleware)
+      .forRoutes({ path: "notifications/(.*)", method: RequestMethod.ALL });
 
     consumer
       .apply(notificationProxy)
