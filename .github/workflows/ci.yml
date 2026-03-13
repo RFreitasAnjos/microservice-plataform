@@ -1,0 +1,21 @@
+name: Gateway CI
+
+on:
+  push:
+    paths:
+      - "gateway/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: gateway
+
+      - name: Run tests
+        run: npm test
+        working-directory: gateway
