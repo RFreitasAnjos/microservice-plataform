@@ -1,12 +1,10 @@
-import RegisterForm from "@/components/forms/register-form";
+import Form from '@/ui/components/Form';
 
-export default function RegisterPage(){
-   return (
-      <div>
-         <div>
-            <h1>Cadastro</h1>
-         </div>
-         <RegisterForm type="register" />
-      </div>
-   )
+export default function RegisterPage() {
+  return (
+    <div>
+      {/* Registration form goes here */}
+      <Form />
+    </div>
+  );
 }

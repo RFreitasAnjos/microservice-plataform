@@ -1,12 +1,9 @@
-import AuthForm from "@/components/forms/auth-form";
+import LoginForm from "@/ui/components/LoginForm";
 
-export default function LoginPage(){
-   return (
-      <div>
-         <div>
-            <h1>Login</h1>
-         </div>
-         <AuthForm type="login" />
-      </div>
-   )
+export default function LoginPage() {
+  return (
+    <div>
+      <LoginForm />
+    </div>
+  );
 }
