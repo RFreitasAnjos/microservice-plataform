@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Redirect } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -10,12 +10,11 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('health')
-  getHealth() {
-    return {
-      status: 'ok',
-      service: 'api-gateway',
-      timestamp: new Date().toISOString()
-    };
-  }
+  /**
+   * Endpoint de login na raiz da aplicação
+   * Redireciona para /auth/login
+   */
+  @Get('login')
+  @Redirect('/auth/login', 302)
+  login(): void {}
 }

@@ -12,24 +12,27 @@ export class UsersRepository {
       return this.prisma.user.create({
          data: {
             name: data.name,
+            role: "user",
             email: data.email,
             password: data.password,
-            role: "user",
-            isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
+            isActive: true,
          }
       })
    }
 
-   findAll(){
-      return this.prisma.user.findMany();
+   findAll(includeInactive = false){
+      return this.prisma.user.findMany({
+         where: includeInactive ? {} : { isActive: true }
+      });
    }
 
-   findById(id: string){
-      return this.prisma.user.findUnique({
+   findById(id: string, includeInactive = false){
+      return this.prisma.user.findFirst({
          where: {
-            id
+            id,
+            ...(includeInactive ? {} : { isActive: true })
          }
       });
    }
@@ -86,4 +89,18 @@ export class UsersRepository {
          }
       });
    }
+
+   deleteInactiveOlderThan(days: number){
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      return this.prisma.user.deleteMany({
+         where: {
+            isActive: false,
+            updatedAt: {
+               lte: cutoffDate
+            }
+         }
+      });
+   }
+
 }

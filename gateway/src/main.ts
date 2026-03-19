@@ -1,28 +1,24 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {cors: true});
+  const app = await NestFactory.create(AppModule);
 
+  // Usar cookie-parser middleware
+  app.use(cookieParser());
+
+  // Enable CORS com suporte a cookies
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4000';
   app.enableCors({
-    origin: process.env.CORS_ALLOWED_ORIGINS?.split(',') || '*',    
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
+    origin: corsOrigin,
+    credentials: true, // Permite envio de cookies
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
-  const config = new DocumentBuilder()
-    .setTitle("API Gateway")
-    .setDescription("Gateway da plataforma de microservices")
-    .setVersion("1.0")
-    .addBearerAuth()
-    .build();
-
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
-
   await app.listen(process.env.PORT ?? 3000);
+  console.log(`Gateway is running on http://localhost:${process.env.PORT ?? 3000}`);
 }
 bootstrap();
